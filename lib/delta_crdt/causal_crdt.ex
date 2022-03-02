@@ -28,18 +28,6 @@ defmodule DeltaCrdt.CausalCrdt do
 
   defmodule(Diff, do: defstruct(continuation: nil, dots: nil, originator: nil, from: nil, to: nil))
 
-  defmacrop strip_continue(tuple) do
-    if System.otp_release() |> String.to_integer() > 20 do
-      tuple
-    else
-      quote do
-        case unquote(tuple) do
-          {tup1, tup2, {:continue, _}} -> {tup1, tup2}
-        end
-      end
-    end
-  end
-
   ### GenServer callbacks
 
   def init(opts) do
@@ -72,11 +60,7 @@ defmodule DeltaCrdt.CausalCrdt do
       crdt_state: crdt_module.new() |> crdt_module.compress_dots()
     }
 
-    strip_continue({:ok, initial_state, {:continue, :read_storage}})
-  end
-
-  def handle_continue(:read_storage, state) do
-    {:noreply, read_from_storage(state)}
+    {:ok, read_from_storage(initial_state)}
   end
 
   def handle_info({:ack_diff, to}, state) do
